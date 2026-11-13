@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(1100px 480px at 100% -10%, rgba(34, 211, 238, 0.08), transparent 55%),
+    radial-gradient(820px 420px at -10% 0%, rgba(8, 80, 110, 0.35), transparent 52%),
+    #08111f;
+  color: #e8eef7;
+  font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+@layer components {
+  .field {
+    @apply mt-1.5 w-full rounded-lg border border-white/10 bg-[#08111f] px-3 py-2 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-300/70 focus:ring-2 focus:ring-cyan-300/25;
+  }
+
+  .field-label {
+    @apply block text-sm font-medium text-slate-200;
+  }
+}
