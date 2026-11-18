@@ -19,4 +19,6 @@ def test_domain_models_are_registered() -> None:
         "proposal_versions",
         "knowledge_documents",
         "document_processing_jobs",
+        "agent_runs",
+        "agent_events",
     }

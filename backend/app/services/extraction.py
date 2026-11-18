@@ -176,8 +176,8 @@ def _extract_pdf(data: bytes) -> ExtractedText:
             raise ExtractionFailed("This PDF is password protected")
         if document.page_count > MAX_PDF_PAGES:
             raise ExtractionFailed(f"This PDF exceeds the {MAX_PDF_PAGES} page limit")
-        pages = [page.get_text() for page in document]
-        text = "\n".join(pages).strip()
+        pages = [page.get_text().strip() for page in document]
+        text = "\f".join(pages).strip()
         return ExtractedText(text=text, page_count=document.page_count)
     except ExtractionFailed:
         raise

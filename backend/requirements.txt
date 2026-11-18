@@ -13,3 +13,9 @@ email-validator==2.3.0
 python-multipart==0.0.20
 pymupdf==1.26.5
 python-docx==1.2.0
+chromadb==1.0.20
+sentence-transformers==3.4.1
+langchain-text-splitters==0.3.8
+langgraph==0.2.76
+langgraph-checkpoint==2.1.2
+langgraph-sdk==0.1.74

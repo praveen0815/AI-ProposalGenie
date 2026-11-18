@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Annotated
 from urllib.parse import quote_plus
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
@@ -61,6 +61,29 @@ class Settings(BaseSettings):
     max_upload_bytes: int = Field(default=10 * 1024 * 1024, ge=1, le=50 * 1024 * 1024)
     max_documents_per_company: int = Field(default=100, ge=1, le=10_000)
 
+    embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+    chroma_path: str = str(PROJECT_ROOT / "storage" / "chroma")
+    chroma_collection: str = "company_knowledge"
+    rag_chunk_size: int = Field(default=800, ge=200, le=4000)
+    rag_chunk_overlap: int = Field(default=120, ge=0, le=1000)
+    rag_top_k: int = Field(default=5, ge=1, le=20)
+    rag_similarity_threshold: float = Field(default=0.25, ge=0, le=1)
+
+    llm_provider: str = "openai"
+    llm_base_url: str = "https://api.openai.com/v1"
+    llm_api_key: str = ""
+    llm_model: str = "gpt-4o-mini"
+    llm_timeout_seconds: float = Field(default=30, ge=1, le=120)
+
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-2.5-flash"
+    gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta"
+    gemini_timeout_seconds: float = Field(default=60, ge=1, le=180)
+    gemini_max_retries: int = Field(default=2, ge=0, le=4)
+    agent_max_review_iterations: int = Field(default=2, ge=1, le=5)
+    research_api_key: str = ""
+    research_base_url: str = ""
+
     cors_origins: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: [
             "http://localhost:5173",
@@ -91,17 +114,35 @@ class Settings(BaseSettings):
             raise ValueError("JWT_SECRET must be at least 32 characters")
         return stripped
 
-    @field_validator("document_storage_path")
+    @field_validator("document_storage_path", "chroma_path")
     @classmethod
-    def document_storage_stays_private(cls, value: str) -> str:
+    def storage_stays_private(cls, value: str) -> str:
         path = Path(value).expanduser()
         if not path.is_absolute():
             path = PROJECT_ROOT / path
         resolved = path.resolve()
         frontend = (PROJECT_ROOT / "frontend").resolve()
         if resolved.is_relative_to(frontend):
-            raise ValueError("Document storage must stay outside the frontend")
+            raise ValueError("Storage paths must stay outside the frontend")
         return str(resolved)
+
+    @field_validator("llm_provider")
+    @classmethod
+    def llm_provider_is_supported(cls, value: str) -> str:
+        if value.strip().lower() != "openai":
+            raise ValueError("LLM_PROVIDER must be openai for the OpenAI-compatible API")
+        return "openai"
+
+    @field_validator("llm_base_url", "gemini_base_url", "research_base_url")
+    @classmethod
+    def llm_base_url_has_no_trailing_slash(cls, value: str) -> str:
+        return value.strip().rstrip("/")
+
+    @model_validator(mode="after")
+    def chunk_overlap_fits(self) -> "Settings":
+        if self.rag_chunk_overlap >= self.rag_chunk_size:
+            raise ValueError("RAG_CHUNK_OVERLAP must be smaller than RAG_CHUNK_SIZE")
+        return self
 
     @field_validator("jwt_algorithm")
     @classmethod

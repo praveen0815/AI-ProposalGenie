@@ -10,7 +10,7 @@ from sqlalchemy import DateTime, Enum, ForeignKey, Index, Integer, String, Text,
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
-from app.models.enums import DocumentFileType, DocumentProcessingStatus
+from app.models.enums import DocumentFileType, DocumentProcessingStatus, IndexStatus
 from app.models.mixins import TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
@@ -70,6 +70,22 @@ class KnowledgeDocument(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     page_count: Mapped[int | None] = mapped_column(Integer)
     processing_error: Mapped[str | None] = mapped_column(String(300))
     processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    index_status: Mapped[IndexStatus] = mapped_column(
+        Enum(
+            IndexStatus,
+            name="ck_knowledge_documents_index_status",
+            native_enum=False,
+            length=32,
+            create_constraint=True,
+        ),
+        nullable=False,
+        default=IndexStatus.NOT_INDEXED,
+        server_default=IndexStatus.NOT_INDEXED.value,
+    )
+    index_error: Mapped[str | None] = mapped_column(String(300))
+    indexed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    chunk_count: Mapped[int | None] = mapped_column(Integer)
+    content_hash: Mapped[str | None] = mapped_column(String(64))
 
     company: Mapped[Company] = relationship(back_populates="knowledge_documents")
     uploaded_by: Mapped[User | None] = relationship(back_populates="knowledge_documents")

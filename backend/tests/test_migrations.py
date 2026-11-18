@@ -14,6 +14,8 @@ EXPECTED_TABLES = {
     "proposal_versions",
     "knowledge_documents",
     "document_processing_jobs",
+    "agent_runs",
+    "agent_events",
 }
 
 
@@ -56,3 +58,23 @@ def test_foreign_keys_use_the_expected_delete_behavior() -> None:
     assert _ondelete("knowledge_documents", "company_id") == "CASCADE"
     assert _ondelete("knowledge_documents", "uploaded_by_id") == "SET NULL"
     assert _ondelete("document_processing_jobs", "document_id") == "CASCADE"
+
+
+def test_proposals_store_generation_metadata() -> None:
+    columns = {column["name"]: column for column in inspect(get_engine()).get_columns("proposals")}
+    section_columns = {column["name"]: column for column in inspect(get_engine()).get_columns("proposal_sections")}
+
+    assert columns["generation_input"]["nullable"] is True
+    assert columns["generation_metadata"]["nullable"] is True
+    assert columns["model_name"]["nullable"] is True
+    assert columns["generated_at"]["nullable"] is True
+    assert section_columns["needs_review"]["nullable"] is False
+    assert section_columns["source_references"]["nullable"] is False
+
+
+def test_knowledge_documents_track_index_status() -> None:
+    columns = {column["name"]: column for column in inspect(get_engine()).get_columns("knowledge_documents")}
+
+    assert columns["index_status"]["nullable"] is False
+    assert columns["content_hash"]["nullable"] is True
+    assert columns["chunk_count"]["nullable"] is True

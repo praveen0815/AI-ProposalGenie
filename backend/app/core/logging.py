@@ -31,6 +31,9 @@ def redact_secrets(text: str) -> str:
         settings.postgres_password,
         settings.redis_password,
         settings.jwt_secret,
+        settings.llm_api_key,
+        settings.gemini_api_key,
+        settings.research_api_key,
         quote_plus(settings.postgres_password),
         quote_plus(settings.redis_password),
     )

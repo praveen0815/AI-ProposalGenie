@@ -8,7 +8,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.models.enums import DocumentProcessingStatus, MembershipRole
+from app.models.enums import DocumentProcessingStatus, IndexStatus, MembershipRole
 from app.models.knowledge import DocumentProcessingJob, KnowledgeDocument
 from app.models.membership import CompanyMembership
 from app.models.user import User
@@ -56,6 +56,7 @@ def upload_document(
         file_size=len(data),
         storage_key="pending",
         processing_status=DocumentProcessingStatus.UPLOADED,
+        index_status=IndexStatus.NOT_INDEXED,
     )
     db.add(document)
     db.flush()
@@ -233,6 +234,10 @@ def _response(document: KnowledgeDocument) -> DocumentResponse:
         character_count=document.character_count,
         page_count=document.page_count,
         processing_error=document.processing_error,
+        index_status=document.index_status,
+        index_error=document.index_error,
+        indexed_at=document.indexed_at,
+        chunk_count=document.chunk_count,
         created_at=document.created_at,
         updated_at=document.updated_at,
     )
@@ -245,5 +250,8 @@ def _status(document: KnowledgeDocument) -> DocumentStatusResponse:
         character_count=document.character_count,
         page_count=document.page_count,
         processing_error=document.processing_error,
+        index_status=document.index_status,
+        index_error=document.index_error,
+        chunk_count=document.chunk_count,
         updated_at=document.updated_at,
     )

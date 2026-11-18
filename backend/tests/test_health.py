@@ -58,6 +58,14 @@ def test_openapi_lists_health_paths_without_secrets(client: TestClient) -> None:
     assert "/api/v1/auth/register" in paths
     assert "/api/v1/companies" in paths
     assert "/api/v1/knowledge/documents/upload" in paths
+    assert "/api/v1/rag/search" in paths
+    assert "/api/v1/rag/query" in paths
+    assert "/api/v1/proposals" in paths
+    assert "/api/v1/proposals/{proposal_id}/generate" in paths
+    assert "/api/v1/agents/proposals/{proposal_id}/run" in paths
+    assert "/api/v1/agents/proposals/{proposal_id}/status" in paths
+    assert "/api/v1/agents/proposals/{proposal_id}/history" in paths
+    assert "/api/v1/agents/proposals/{proposal_id}/resume" in paths
     assert settings.postgres_password not in response.text
     assert settings.redis_password not in response.text
     assert settings.jwt_secret not in response.text

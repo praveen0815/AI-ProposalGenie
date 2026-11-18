@@ -12,6 +12,10 @@ from app.core.config import get_settings
 from app.db.session import get_session_factory
 from app.models.user import User
 from app.repositories import users as user_repository
+from app.rag.embedding_service import SentenceTransformerEmbeddings
+from app.integrations.llm.gemini import GeminiLanguageModel
+from app.rag.llm import OpenAICompatibleLanguageModel
+from app.rag.vector_store import ChromaVectorStore
 from app.services.security import TokenError, decode_access_token
 from app.storage.local import LocalDocumentStorage
 
@@ -55,3 +59,41 @@ def get_document_storage() -> LocalDocumentStorage:
     """Local storage rooted outside the frontend. Tests can override this dependency."""
 
     return LocalDocumentStorage(Path(get_settings().document_storage_path))
+
+
+@lru_cache
+def get_embedding_service() -> SentenceTransformerEmbeddings:
+    return SentenceTransformerEmbeddings(get_settings().embedding_model)
+
+
+@lru_cache
+def get_vector_store() -> ChromaVectorStore:
+    settings = get_settings()
+    return ChromaVectorStore(Path(settings.chroma_path), settings.chroma_collection)
+
+
+def get_language_model() -> OpenAICompatibleLanguageModel:
+    settings = get_settings()
+    if not settings.llm_api_key.strip():
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="No language model is configured")
+    return OpenAICompatibleLanguageModel(
+        settings.llm_base_url,
+        settings.llm_api_key,
+        settings.llm_model,
+        settings.llm_timeout_seconds,
+    )
+
+
+def get_proposal_model() -> GeminiLanguageModel:
+    """Gemini client for proposal generation. The key stays on the server."""
+
+    settings = get_settings()
+    if not settings.gemini_api_key.strip():
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Gemini is not configured")
+    return GeminiLanguageModel(
+        api_key=settings.gemini_api_key,
+        model=settings.gemini_model,
+        base_url=settings.gemini_base_url,
+        timeout_seconds=settings.gemini_timeout_seconds,
+        max_retries=settings.gemini_max_retries,
+    )

@@ -1,8 +1,4 @@
-"""Company-scoped proposal queries.
-
-Proposal editing is a later phase. This repository exists so company isolation
-is explicit wherever proposal rows are read.
-"""
+"""Company-scoped proposal queries."""
 
 from uuid import UUID
 

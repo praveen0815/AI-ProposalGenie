@@ -12,6 +12,7 @@ import { CreateProposalPage } from "./pages/CreateProposalPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { ProposalDetailPage } from "./pages/ProposalDetailPage";
 import { ProposalsPage } from "./pages/ProposalsPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { SettingsPage } from "./pages/SettingsPage";
@@ -28,6 +29,7 @@ export default function App() {
               <Route index element={<DashboardPage />} />
               <Route path="proposals" element={<ProposalsPage />} />
               <Route path="proposals/new" element={<CreateProposalPage />} />
+              <Route path="proposals/:proposalId" element={<ProposalDetailPage />} />
               <Route path="knowledge" element={<CompanyKnowledgePage />} />
               <Route path="company" element={<CompanyProfilePage />} />
               <Route path="company/new" element={<CompanyCreatePage />} />

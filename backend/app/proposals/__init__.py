@@ -1,0 +1,1 @@
+"""Proposal generation domain helpers."""

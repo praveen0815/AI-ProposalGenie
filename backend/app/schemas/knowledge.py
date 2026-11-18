@@ -5,7 +5,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
-from app.models.enums import DocumentFileType, DocumentProcessingStatus
+from app.models.enums import DocumentFileType, DocumentProcessingStatus, IndexStatus
 
 
 class DocumentResponse(BaseModel):
@@ -21,6 +21,10 @@ class DocumentResponse(BaseModel):
     character_count: int | None
     page_count: int | None
     processing_error: str | None
+    index_status: IndexStatus
+    index_error: str | None
+    indexed_at: datetime | None
+    chunk_count: int | None
     created_at: datetime
     updated_at: datetime
 
@@ -31,4 +35,7 @@ class DocumentStatusResponse(BaseModel):
     character_count: int | None
     page_count: int | None
     processing_error: str | None
+    index_status: IndexStatus
+    index_error: str | None
+    chunk_count: int | None
     updated_at: datetime

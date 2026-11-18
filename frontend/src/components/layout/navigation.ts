@@ -29,5 +29,8 @@ const pageTitles: { path: string; label: string }[] = [
 ];
 
 export function pageTitle(pathname: string): string {
+  if (pathname.startsWith("/proposals/") && pathname !== "/proposals/new") {
+    return "Proposal";
+  }
   return pageTitles.find((item) => item.path === pathname)?.label ?? "Not found";
 }

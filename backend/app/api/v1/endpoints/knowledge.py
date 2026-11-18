@@ -5,10 +5,14 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user, get_db, get_document_storage
+from app.api.deps import get_current_user, get_db, get_document_storage, get_embedding_service, get_vector_store
+from app.api.v1.endpoints.rag import index_after_processing
+from app.rag.rag_service import delete_index
 from app.core.config import get_settings
 from app.models.user import User
 from app.schemas.knowledge import DocumentResponse, DocumentStatusResponse
+from app.rag.embedding_service import EmbeddingService
+from app.rag.vector_store import VectorStore
 from app.services import documents as document_service
 from app.storage.base import DocumentStorage
 
@@ -22,9 +26,11 @@ async def upload_document(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
     storage: DocumentStorage = Depends(get_document_storage),
+    embeddings: EmbeddingService = Depends(get_embedding_service),
+    store: VectorStore = Depends(get_vector_store),
 ) -> DocumentResponse:
     data = await _read_upload(file)
-    return document_service.upload_document(
+    saved = document_service.upload_document(
         db,
         storage,
         current_user,
@@ -33,6 +39,8 @@ async def upload_document(
         file.content_type,
         data,
     )
+    index_after_processing(db, embeddings, store, current_user, saved.id)
+    return document_service.get_document(db, current_user, saved.id)
 
 
 @router.get("/documents", response_model=list[DocumentResponse])
@@ -68,7 +76,9 @@ def delete_document(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
     storage: DocumentStorage = Depends(get_document_storage),
+    store: VectorStore = Depends(get_vector_store),
 ) -> None:
+    delete_index(db, store, current_user, document_id)
     document_service.delete_document(db, storage, current_user, document_id)
 
 
@@ -78,8 +88,12 @@ def reprocess_document(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
     storage: DocumentStorage = Depends(get_document_storage),
+    embeddings: EmbeddingService = Depends(get_embedding_service),
+    store: VectorStore = Depends(get_vector_store),
 ) -> DocumentResponse:
-    return document_service.reprocess_document(db, storage, current_user, document_id)
+    updated = document_service.reprocess_document(db, storage, current_user, document_id)
+    index_after_processing(db, embeddings, store, current_user, updated.id)
+    return document_service.get_document(db, current_user, updated.id)
 
 
 async def _read_upload(file: UploadFile) -> bytes:

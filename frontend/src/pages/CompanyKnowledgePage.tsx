@@ -3,6 +3,7 @@ import type { DragEvent } from "react";
 import { FileText, Library, RotateCcw, Trash2, Upload } from "lucide-react";
 import { Link } from "react-router-dom";
 
+import { KnowledgeAssistant } from "../components/knowledge/KnowledgeAssistant";
 import { buttonClasses } from "../components/ui/Button";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
@@ -14,14 +15,21 @@ import { useAuth } from "../context/AuthProvider";
 import { useCompany } from "../context/CompanyProvider";
 import { apiErrorMessage } from "../lib/apiError";
 import { formatFileSize, formatTimestamp } from "../lib/format";
-import { deleteDocument, listDocuments, reprocessDocument, uploadDocument } from "../services/knowledge";
-import type { DocumentProcessingStatus, KnowledgeDocument } from "../types/knowledge";
+import { deleteDocument, indexDocument, listDocuments, reindexDocument, reprocessDocument, uploadDocument } from "../services/knowledge";
+import type { DocumentProcessingStatus, IndexStatus, KnowledgeDocument } from "../types/knowledge";
 
 const statusLabels: Record<DocumentProcessingStatus, string> = {
   UPLOADED: "Uploaded",
   PROCESSING: "Processing",
   COMPLETED: "Ready",
   FAILED: "Failed",
+};
+
+const indexLabels: Record<IndexStatus, string> = {
+  NOT_INDEXED: "Not indexed",
+  INDEXING: "Indexing",
+  INDEXED: "Indexed",
+  FAILED: "Index failed",
 };
 
 const statusClasses: Record<DocumentProcessingStatus, string> = {
@@ -108,6 +116,31 @@ export function CompanyKnowledgePage() {
     const file = files[0];
     if (file) {
       void sendFile(file);
+    }
+  }
+
+  async function refreshIndex(document: KnowledgeDocument) {
+    setBusyId(document.id);
+    setError(null);
+    try {
+      const updated = document.index_status === "INDEXED" ? await reindexDocument(document.id) : await indexDocument(document.id);
+      setDocuments((currentDocuments) =>
+        currentDocuments.map((item) =>
+          item.id === document.id
+            ? {
+                ...item,
+                index_status: updated.index_status,
+                index_error: updated.index_error,
+                indexed_at: updated.indexed_at,
+                chunk_count: updated.chunk_count,
+              }
+            : item,
+        ),
+      );
+    } catch (caught) {
+      setError(apiErrorMessage(caught, "The document could not be indexed."));
+    } finally {
+      setBusyId(null);
     }
   }
 
@@ -215,10 +248,12 @@ export function CompanyKnowledgePage() {
             <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
               <div className="h-full bg-cyan-300 transition-all" style={{ width: `${progress}%` }} />
             </div>
-            <p className="mt-2 text-xs text-slate-400">{progress < 100 ? `Uploading ${progress}%` : "Processing document"}</p>
+            <p className="mt-2 text-xs text-slate-400">{progress < 100 ? `Uploading ${progress}%` : "Processing and indexing document"}</p>
           </div>
         ) : null}
       </Card>
+
+      <KnowledgeAssistant companyId={current.id} />
 
       {notice ? <p className="text-sm text-cyan-100">{notice}</p> : null}
       {error ? <ErrorState title="Document request failed" message={error} /> : null}
@@ -251,8 +286,12 @@ export function CompanyKnowledgePage() {
                       {document.page_count ? ` · ${document.page_count} pages` : ""}
                       {document.character_count ? ` · ${document.character_count.toLocaleString()} characters extracted` : ""}
                     </p>
-                    <p className="mt-1 text-xs text-slate-500">Added {formatTimestamp(document.created_at)}</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Added {formatTimestamp(document.created_at)} · {indexLabels[document.index_status]}
+                      {document.chunk_count ? ` · ${document.chunk_count} chunks` : ""}
+                    </p>
                     {document.processing_error ? <p className="mt-2 text-sm text-rose-200">{document.processing_error}</p> : null}
+                    {document.index_error ? <p className="mt-2 text-sm text-rose-200">{document.index_error}</p> : null}
                   </div>
                   {canManage ? (
                     <div className="flex flex-wrap gap-2">
@@ -260,6 +299,15 @@ export function CompanyKnowledgePage() {
                         <Button variant="secondary" disabled={busyId === document.id} onClick={() => void retry(document)}>
                           <RotateCcw className="h-4 w-4" aria-hidden="true" />
                           Retry processing
+                        </Button>
+                      ) : null}
+                      {document.processing_status === "COMPLETED" ? (
+                        <Button
+                          variant="secondary"
+                          disabled={busyId === document.id}
+                          onClick={() => void refreshIndex(document)}
+                        >
+                          {document.index_status === "INDEXED" ? "Reindex" : "Index"}
                         </Button>
                       ) : null}
                       {confirmingId === document.id ? (

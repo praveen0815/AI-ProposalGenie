@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import Enum, ForeignKey, Index, Integer, String, Text, UniqueConstraint, Uuid
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Index, Integer, String, Text, UniqueConstraint, Uuid, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -53,6 +54,17 @@ class Proposal(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         default=ProposalStatus.DRAFT,
         server_default=ProposalStatus.DRAFT.value,
     )
+    generation_input: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    generation_metadata: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    source_references: Mapped[list[Any]] = mapped_column(
+        JSONB,
+        nullable=False,
+        default=list,
+        server_default=text("'[]'::jsonb"),
+    )
+    model_name: Mapped[str | None] = mapped_column(String(120))
+    generated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    generation_error: Mapped[str | None] = mapped_column(String(500))
 
     company: Mapped[Company] = relationship(back_populates="proposals")
     client: Mapped[Client | None] = relationship(back_populates="proposals")
@@ -83,6 +95,19 @@ class ProposalSection(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     title: Mapped[str] = mapped_column(String(300), nullable=False)
     body: Mapped[str] = mapped_column(Text, nullable=False, default="", server_default="")
     position: Mapped[int] = mapped_column(Integer, nullable=False)
+    needs_review: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default=text("false"),
+    )
+    review_notes: Mapped[str | None] = mapped_column(Text)
+    source_references: Mapped[list[Any]] = mapped_column(
+        JSONB,
+        nullable=False,
+        default=list,
+        server_default=text("'[]'::jsonb"),
+    )
 
     proposal: Mapped[Proposal] = relationship(back_populates="sections")
 
