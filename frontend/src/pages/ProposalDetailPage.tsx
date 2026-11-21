@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { AgentWorkflow } from "../components/proposals/AgentWorkflow";
+import { ProposalExports } from "../components/proposals/ProposalExports";
+import { ProposalWorkspace } from "../components/proposals/ProposalWorkspace";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { ErrorState } from "../components/ui/ErrorState";
@@ -125,35 +127,17 @@ export function ProposalDetailPage() {
           </p>
         ) : null}
       </Card>
-      {proposal.sections.length === 0 ? (
-        <Card>
-          <h2 className="text-base font-semibold text-white">No sections yet</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-400">
-            This draft is saved. Generate it when the company profile is ready. The page does not show sample proposal text.
-          </p>
-          <Link to="/company" className="mt-4 inline-block text-sm font-semibold text-cyan-200">
-            Review company profile
-          </Link>
-        </Card>
-      ) : (
-        proposal.sections.map((section) => (
-          <Card key={section.id}>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-base font-semibold text-white">{section.title}</h2>
-              <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-semibold text-slate-300">AI draft</span>
-            </div>
-            {section.needs_review ? (
-              <p className="mt-3 text-sm text-amber-100">Needs review{section.review_notes ? `: ${section.review_notes}` : "."}</p>
-            ) : null}
-            <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-slate-200">{section.body}</p>
-            {section.source_references.length ? (
-              <p className="mt-4 text-xs text-cyan-100">
-                Verified company documents: {section.source_references.map((source) => source.filename).join(", ")}
-              </p>
-            ) : null}
-          </Card>
-        ))
-      )}
+      {proposal.sections.length === 0 && proposal.status !== "GENERATING" ? (
+        <p className="text-sm text-slate-400">
+          This draft has no sections yet. Add one below, or{" "}
+          <Link to="/company" className="font-semibold text-cyan-200">
+            review the company profile
+          </Link>{" "}
+          before generating.
+        </p>
+      ) : null}
+      <ProposalExports proposalId={proposal.id} status={proposal.status} revision={proposal.content_revision} />
+      <ProposalWorkspace proposal={proposal} onProposal={setProposal} />
     </div>
   );
 }

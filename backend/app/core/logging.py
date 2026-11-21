@@ -16,10 +16,10 @@ class JsonFormatter(logging.Formatter):
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "level": record.levelname,
             "logger": record.name,
-            "message": record.getMessage(),
+            "message": redact_secrets(record.getMessage()),
         }
         if record.exc_info:
-            payload["exception"] = self.formatException(record.exc_info)
+            payload["exception"] = redact_secrets(self.formatException(record.exc_info))
         return json.dumps(payload, default=str)
 
 

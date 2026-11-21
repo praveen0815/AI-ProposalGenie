@@ -1,5 +1,9 @@
 """Shared API test client."""
 
+import os
+
+os.environ["RATE_LIMIT_ENABLED"] = "false"
+
 from pathlib import Path
 
 import pytest

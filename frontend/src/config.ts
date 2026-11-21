@@ -1,6 +1,6 @@
-const configured = import.meta.env.VITE_API_BASE_URL?.trim();
+const configured = import.meta.env.VITE_API_BASE_URL;
 
 export const apiBaseUrl =
-  configured && configured.length > 0 ? configured.replace(/\/$/, "") : "http://localhost:8000";
+  configured === undefined ? "http://localhost:8000" : configured.trim().replace(/\/$/, "");
 
 export const healthPath = "/api/v1/health";

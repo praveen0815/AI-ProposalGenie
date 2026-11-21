@@ -31,5 +31,9 @@ Thumbs.db
 # Logs
 *.log
 
-# Uploaded company documents
+# Uploaded company documents, Chroma data, and local model caches
 /storage/
+**/.cache/
+credentials.json
+*.pem
+*.key

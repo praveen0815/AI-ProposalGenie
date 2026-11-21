@@ -195,7 +195,7 @@ def test_proposals_stay_inside_the_company(api: TestClient) -> None:
     renamed = api.patch(
         f"/api/v1/proposals/{own['id']}",
         headers=owner,
-        json={"title": "Renamed checkout", "status": "APPROVED"},
+        json={"title": "Renamed checkout"},
     )
     member_edit = api.patch(f"/api/v1/proposals/{own['id']}", headers=member, json={"title": "Member edit"})
     blocked = api.patch(f"/api/v1/proposals/{own['id']}", headers=owner, json={"status": "GENERATING"})
@@ -210,7 +210,7 @@ def test_proposals_stay_inside_the_company(api: TestClient) -> None:
     assert hidden.status_code == 404
     assert renamed.status_code == 200
     assert renamed.json()["title"] == "Renamed checkout"
-    assert renamed.json()["status"] == "APPROVED"
+    assert renamed.json()["status"] == "DRAFT"
     assert member_edit.status_code == 403
     assert blocked.status_code == 422
     assert denied.status_code == 403

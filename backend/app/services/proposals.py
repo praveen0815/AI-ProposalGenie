@@ -10,7 +10,9 @@ from pydantic import ValidationError
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
+from app.core.audit import audit
 from app.core.config import get_settings
+from app.core.untrusted import fence
 from app.integrations.llm.errors import LLMAPIError, LLMResponseError, LLMTimeout
 from app.integrations.llm.prompts import OUTLINE_SCHEMA, SECTIONS_SCHEMA, outline_prompt, sections_prompt
 from app.integrations.llm.provider import StructuredLanguageModel
@@ -83,6 +85,7 @@ def create_proposal(db: Session, actor: User, payload: ProposalCreate) -> Propos
     db.add(proposal)
     db.commit()
     db.refresh(proposal)
+    audit("proposal.create", actor_id=actor.id, company_id=proposal.company_id, resource_id=proposal.id)
     return _detail(proposal)
 
 
@@ -99,7 +102,9 @@ def update_proposal(db: Session, actor: User, proposal_id: UUID, payload: Propos
     if "summary" in changes:
         proposal.summary = changes["summary"]
     if "status" in changes and changes["status"] is not None:
-        proposal.status = changes["status"]
+        from app.services.workspace import apply_direct_status
+
+        apply_direct_status(db, actor, proposal, changes["status"])
     db.commit()
     db.refresh(proposal)
     return _detail(proposal)
@@ -163,6 +168,7 @@ def generate_proposal(
     _save_generation(db, proposal, actor, sections, chunks, retrieval_status, outline, drafted)
     db.commit()
     db.refresh(proposal)
+    audit("proposal.generate", actor_id=actor.id, company_id=proposal.company_id, resource_id=proposal.id)
     return _detail(proposal)
 
 
@@ -210,7 +216,7 @@ def _context(
             "document_id": str(chunk.document_id),
             "filename": chunk.filename,
             "page_number": chunk.page_number,
-            "excerpt": chunk.text[:1200],
+            "excerpt": fence("company_document", chunk.text[:1200]),
         }
         for chunk in chunks
     ]
@@ -376,8 +382,11 @@ def _save_generation(
                 needs_review=bool(section["needs_review"]),
                 review_notes=section["review_notes"] if isinstance(section["review_notes"], str) else None,
                 source_references=section["source_references"],
+                ai_body=str(section["body"]),
+                origin="ai",
             )
         )
+    proposal.content_revision = (proposal.content_revision or 0) + 1
     usage = _combined_usage(outline.usage, drafted.usage)
     proposal.status = ProposalStatus.REVIEW
     proposal.model_name = drafted.model
@@ -404,6 +413,7 @@ def _save_generation(
             proposal_id=proposal.id,
             version_number=(version_number or 0) + 1,
             created_by_id=actor.id,
+            change_description="Generated proposal",
             snapshot={
                 "title": proposal.title,
                 "prompt_version": PROMPT_VERSION,
@@ -521,6 +531,7 @@ def _detail(proposal: Proposal) -> ProposalResponse:
         generation_error=proposal.generation_error,
         generation_input=stored if isinstance(stored, dict) and stored else None,
         source_references=[SourceReference.model_validate(item) for item in proposal.source_references or []],
+        content_revision=proposal.content_revision,
         sections=[
             ProposalSectionResponse(
                 id=section.id,
@@ -529,6 +540,8 @@ def _detail(proposal: Proposal) -> ProposalResponse:
                 position=section.position,
                 needs_review=section.needs_review,
                 review_notes=section.review_notes,
+                ai_body=section.ai_body,
+                origin=section.origin,
                 source_references=[SourceReference.model_validate(item) for item in section.source_references or []],
             )
             for section in proposal.sections

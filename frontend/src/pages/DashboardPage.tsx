@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { RefreshCw } from "lucide-react";
 
 import { CompanyBanner } from "../components/company/CompanyBanner";
@@ -11,6 +12,10 @@ import { useHealthStatus } from "../context/HealthProvider";
 import { apiBaseUrl, healthPath } from "../config";
 import { formatLatency, formatTimestamp, serviceLabel } from "../lib/format";
 
+const DashboardAnalytics = lazy(() =>
+  import("../components/dashboard/DashboardAnalytics").then((module) => ({ default: module.DashboardAnalytics })),
+);
+
 export function DashboardPage() {
   const { report, error, loading, reload } = useHealthStatus();
 
@@ -19,7 +24,7 @@ export function DashboardPage() {
       <PageHeader
         eyebrow="Overview"
         title="Dashboard"
-        description="Live status reported by the ProposalGenie API. Counts and drafts are not shown because proposal storage is not part of this release."
+        description="Proposal counts, trends, and budgets from this company's records, plus the live API status."
         action={
           <Button variant="secondary" onClick={() => void reload()} disabled={loading}>
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} aria-hidden="true" />
@@ -29,6 +34,9 @@ export function DashboardPage() {
       />
 
       <CompanyBanner />
+      <Suspense fallback={<Spinner label="Loading proposal analytics" />}>
+        <DashboardAnalytics />
+      </Suspense>
 
       {loading && !report && !error ? <Spinner label="Checking PostgreSQL, Redis, and the API" /> : null}
       {error && !report ? <ErrorState message={error} onRetry={() => void reload()} /> : null}

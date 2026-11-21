@@ -6,6 +6,7 @@ const labels: Record<ProposalStatus, string> = {
   REVIEW: "In review",
   APPROVED: "Approved",
   SENT: "Sent",
+  REJECTED: "Rejected",
   ARCHIVED: "Archived",
 };
 

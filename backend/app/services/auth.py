@@ -6,6 +6,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.audit import audit
 from app.core.config import get_settings
 from app.models.user import User
 from app.repositories import users as user_repository
@@ -41,6 +42,7 @@ def register_user(db: Session, payload: RegisterRequest) -> TokenResponse:
             detail="An account with that email already exists",
         ) from exc
     db.refresh(user)
+    audit("auth.register", actor_id=user.id)
     return _token_response(user)
 
 
@@ -51,6 +53,7 @@ def login_user(db: Session, payload: LoginRequest) -> TokenResponse:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
     if not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
+    audit("auth.login", actor_id=user.id)
     return _token_response(user)
 
 
@@ -58,3 +61,4 @@ def logout_user(db: Session, user: User) -> None:
     user.token_version += 1
     user.updated_at = datetime.now(UTC)
     db.commit()
+    audit("auth.logout", actor_id=user.id)

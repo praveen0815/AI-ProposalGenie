@@ -7,6 +7,7 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.core.audit import audit
 from app.core.config import get_settings
 from app.models.enums import DocumentProcessingStatus, IndexStatus, MembershipRole
 from app.models.knowledge import DocumentProcessingJob, KnowledgeDocument
@@ -78,6 +79,7 @@ def upload_document(
         db.rollback()
         raise
     db.refresh(document)
+    audit("document.upload", actor_id=actor.id, company_id=document.company_id, resource_id=document.id)
     return _response(document)
 
 

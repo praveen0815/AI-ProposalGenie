@@ -1,4 +1,4 @@
-export type ProposalStatus = "DRAFT" | "GENERATING" | "REVIEW" | "APPROVED" | "SENT" | "ARCHIVED";
+export type ProposalStatus = "DRAFT" | "GENERATING" | "REVIEW" | "APPROVED" | "SENT" | "REJECTED" | "ARCHIVED";
 
 export interface ProposalInput {
   company_id: string;
@@ -36,6 +36,8 @@ export interface ProposalSection {
   position: number;
   needs_review: boolean;
   review_notes: string | null;
+  ai_body: string | null;
+  origin: string;
   source_references: SourceReference[];
 }
 
@@ -54,6 +56,7 @@ export interface ProposalSummary {
 
 export interface ProposalDetail extends ProposalSummary {
   client_id: string | null;
+  content_revision: number;
   model_name: string | null;
   prompt_version: string | null;
   retrieval_status: string | null;

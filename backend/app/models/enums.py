@@ -15,7 +15,22 @@ class ProposalStatus(str, enum.Enum):
     REVIEW = "REVIEW"
     APPROVED = "APPROVED"
     SENT = "SENT"
+    REJECTED = "REJECTED"
     ARCHIVED = "ARCHIVED"
+
+
+class ApprovalAction(str, enum.Enum):
+    SUBMIT = "SUBMIT"
+    APPROVE = "APPROVE"
+    REQUEST_CHANGES = "REQUEST_CHANGES"
+    REJECT = "REJECT"
+    SEND = "SEND"
+    ARCHIVE = "ARCHIVE"
+
+
+class CostSource(str, enum.Enum):
+    ESTIMATED = "ESTIMATED"
+    CONFIRMED = "CONFIRMED"
 
 
 class DocumentFileType(str, enum.Enum):
@@ -43,3 +58,8 @@ class AgentRunStatus(str, enum.Enum):
     RUNNING = "RUNNING"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
+
+
+class ExportFormat(str, enum.Enum):
+    PDF = "PDF"
+    DOCX = "DOCX"

@@ -56,6 +56,11 @@ class Settings(BaseSettings):
     jwt_secret: str
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = Field(default=60, ge=5, le=1440)
+    rate_limit_enabled: bool = True
+    rate_limit_auth_per_minute: int = Field(default=30, ge=1, le=1000)
+    rate_limit_expensive_per_minute: int = Field(default=20, ge=1, le=1000)
+    rate_limit_write_per_minute: int = Field(default=120, ge=1, le=5000)
+    rate_limit_read_per_minute: int = Field(default=300, ge=1, le=10000)
 
     document_storage_path: str = str(PROJECT_ROOT / "storage" / "documents")
     max_upload_bytes: int = Field(default=10 * 1024 * 1024, ge=1, le=50 * 1024 * 1024)

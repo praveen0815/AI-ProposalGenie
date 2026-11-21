@@ -48,6 +48,7 @@ class Company(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     brand_tagline: Mapped[str | None] = mapped_column(String(300))
     brand_voice: Mapped[str | None] = mapped_column(Text)
     brand_primary_color: Mapped[str | None] = mapped_column(String(32))
+    logo_storage_key: Mapped[str | None] = mapped_column(String(500))
 
     memberships: Mapped[list[CompanyMembership]] = relationship(
         back_populates="company",

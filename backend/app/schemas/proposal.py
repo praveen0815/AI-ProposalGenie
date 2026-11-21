@@ -109,6 +109,8 @@ class ProposalSectionResponse(BaseModel):
     position: int
     needs_review: bool
     review_notes: str | None
+    ai_body: str | None = None
+    origin: str = "user"
     source_references: list[SourceReference]
 
 
@@ -128,6 +130,7 @@ class ProposalResponse(BaseModel):
     generation_input: dict[str, Any] | None
     source_references: list[SourceReference]
     sections: list[ProposalSectionResponse]
+    content_revision: int = 0
     generated_at: datetime | None
     created_at: datetime
     updated_at: datetime

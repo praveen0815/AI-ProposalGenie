@@ -62,6 +62,16 @@ def test_openapi_lists_health_paths_without_secrets(client: TestClient) -> None:
     assert "/api/v1/rag/query" in paths
     assert "/api/v1/proposals" in paths
     assert "/api/v1/proposals/{proposal_id}/generate" in paths
+    assert "/api/v1/proposals/{proposal_id}/draft" in paths
+    assert "/api/v1/proposals/{proposal_id}/versions" in paths
+    assert "/api/v1/proposals/{proposal_id}/costs" in paths
+    assert "/api/v1/proposals/{proposal_id}/approval" in paths
+    assert "/api/v1/proposals/{proposal_id}/export/pdf" in paths
+    assert "/api/v1/proposals/{proposal_id}/export/docx" in paths
+    assert "/api/v1/proposals/{proposal_id}/exports" in paths
+    assert "/api/v1/dashboard/summary" in paths
+    assert "/api/v1/dashboard/proposal-trends" in paths
+    assert "/api/v1/dashboard/status-distribution" in paths
     assert "/api/v1/agents/proposals/{proposal_id}/run" in paths
     assert "/api/v1/agents/proposals/{proposal_id}/status" in paths
     assert "/api/v1/agents/proposals/{proposal_id}/history" in paths

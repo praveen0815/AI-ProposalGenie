@@ -21,4 +21,7 @@ def test_domain_models_are_registered() -> None:
         "document_processing_jobs",
         "agent_runs",
         "agent_events",
+        "proposal_cost_items",
+        "proposal_approvals",
+        "proposal_exports",
     }

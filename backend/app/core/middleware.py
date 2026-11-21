@@ -24,4 +24,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             response.status_code,
             elapsed_ms,
         )
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "no-referrer"
         return response

@@ -16,6 +16,9 @@ EXPECTED_TABLES = {
     "document_processing_jobs",
     "agent_runs",
     "agent_events",
+    "proposal_cost_items",
+    "proposal_approvals",
+    "proposal_exports",
 }
 
 

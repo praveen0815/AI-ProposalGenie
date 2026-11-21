@@ -13,6 +13,7 @@ from app.core.config import get_settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import configure_logging
 from app.core.middleware import RequestLoggingMiddleware
+from app.core.rate_limit import RateLimitMiddleware
 from app.schemas.health import LivenessResponse
 
 logger = logging.getLogger(__name__)
@@ -56,12 +57,13 @@ def create_app() -> FastAPI:
     )
     register_exception_handlers(app)
     app.add_middleware(RequestLoggingMiddleware)
+    app.add_middleware(RateLimitMiddleware)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type", "Accept"],
     )
     app.include_router(api_router, prefix=settings.api_v1_prefix)
 

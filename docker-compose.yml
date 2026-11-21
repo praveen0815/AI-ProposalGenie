@@ -39,6 +39,45 @@ services:
       retries: 12
       start_period: 5s
 
+  api:
+    build:
+      context: ./backend
+    image: proposalgenie-api
+    container_name: proposalgenie-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: postgres
+      REDIS_HOST: redis
+      DOCUMENT_STORAGE_PATH: /data/documents
+      CHROMA_PATH: /data/chroma
+      CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173,http://localhost:8080,http://127.0.0.1:8080
+    volumes:
+      - documents_data:/data/documents
+      - chroma_data:/data/chroma
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./frontend
+    image: proposalgenie-web
+    container_name: proposalgenie-web
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
 volumes:
   postgres_data:
   redis_data:
+  documents_data:
+  chroma_data:
